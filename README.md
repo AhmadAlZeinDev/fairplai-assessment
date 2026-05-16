@@ -41,7 +41,7 @@ Swagger UI: `http://localhost:3000/api/docs`.
 
 ## Testing the Analysis API
 
-The analysis flow is asynchronous — your server triggers an AI job and the AI service calls back via webhook when done. For local testing a mock AI server is included that accepts the trigger request and automatically fires the signed webhook callback after 3 seconds.
+The analysis flow is asynchronous your server triggers an AI job and the AI service calls back via webhook when done. For local testing a mock AI server is included that accepts the trigger request and automatically fires the signed webhook callback after 3 seconds.
 
 ### 1. Start the mock AI server
 
@@ -58,7 +58,7 @@ AI_MODULE_URL=http://localhost:4000
 WEBHOOK_SECRET=your-webhook-secret
 ```
 
-The mock server reads `WEBHOOK_SECRET` from the environment to sign its callback — it must match the value in your `.env`:
+The mock server reads `WEBHOOK_SECRET` from the environment to sign its callback it must match the value in your `.env`:
 
 ```bash
 WEBHOOK_SECRET=your-webhook-secret npm run mock:ai
@@ -66,7 +66,7 @@ WEBHOOK_SECRET=your-webhook-secret npm run mock:ai
 
 ### 2. Full test flow
 
-**Step 1 — Register or login to get a JWT:**
+**Step 1 Register or login to get a JWT:**
 ```http
 POST /api/v1/auth/login
 Content-Type: application/json
@@ -74,7 +74,9 @@ Content-Type: application/json
 { "email": "you@example.com", "password": "yourpassword" }
 ```
 
-**Step 2 — Trigger an analysis job:**
+> **Note on `videoUrl`:** In production this field should be a pre-signed internal URL generated server-side after the client uploads the video to object storage (e.g. S3). The URL must never be client-supplied or publicly accessible the upload flow generates it and passes it directly to this endpoint. It is accepted as a plain URL here because video upload infrastructure is out of scope for this implementation.
+
+**Step 2 Trigger an analysis job:**
 ```http
 POST /api/v1/analysis/trigger
 Authorization: Bearer <token>
@@ -88,7 +90,7 @@ Content-Type: application/json
 
 Response includes a `jobId`. The mock AI server logs the accepted job and schedules the webhook callback.
 
-**Step 3 — Wait ~3 seconds, then poll for the result:**
+**Step 3 Wait ~3 seconds, then poll for the result:**
 ```http
 GET /api/v1/analysis/<jobId>
 Authorization: Bearer <token>

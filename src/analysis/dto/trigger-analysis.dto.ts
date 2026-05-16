@@ -17,7 +17,14 @@ export class TriggerAnalysisDto {
   @IsUUID()
   matchId?: string;
 
-  @ApiProperty({ example: 'https://storage.example.com/videos/match-123.mp4' })
+  @ApiProperty({
+    example: 'https://storage.example.com/videos/match-123.mp4',
+    description:
+      'Pre-signed internal storage URL pointing to the uploaded video. ' +
+      'In production this URL is generated server-side after the client uploads ' +
+      'the video to object storage (e.g. S3) and should never be a public or ' +
+      'client-supplied link. Accepted as a plain URL here for simplicity.',
+  })
   @IsUrl()
   videoUrl: string;
 
