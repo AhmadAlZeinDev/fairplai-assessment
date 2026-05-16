@@ -1,6 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
+
+const mockAuthResult = {
+  accessToken: 'token',
+  user: { id: 'uuid-1', name: 'John', email: 'john@example.com' },
+};
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -13,9 +19,13 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: {
-            register: jest.fn().mockResolvedValue({ accessToken: 'token' }),
-            login: jest.fn().mockResolvedValue({ accessToken: 'token' }),
+            register: jest.fn().mockResolvedValue(mockAuthResult),
+            login: jest.fn().mockResolvedValue(mockAuthResult),
           },
+        },
+        {
+          provide: UsersService,
+          useValue: { findById: jest.fn() },
         },
       ],
     }).compile();
@@ -30,15 +40,11 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('delegates to AuthService and returns the result', async () => {
-      const dto = {
-        name: 'John',
-        email: 'john@example.com',
-        password: 'secret123',
-      };
+      const dto = { name: 'John', email: 'john@example.com', password: 'secret123' };
       const result = await controller.register(dto);
 
       expect(authService.register).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ accessToken: 'token' });
+      expect(result).toEqual(mockAuthResult);
     });
   });
 
@@ -48,7 +54,7 @@ describe('AuthController', () => {
       const result = await controller.login(dto);
 
       expect(authService.login).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ accessToken: 'token' });
+      expect(result).toEqual(mockAuthResult);
     });
   });
 });

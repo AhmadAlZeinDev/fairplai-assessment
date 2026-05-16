@@ -1,6 +1,7 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
@@ -16,6 +17,10 @@ const mockUser = () => ({
   name: 'John Doe',
   email: 'john@example.com',
   password: 'hashed',
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
 });
 
 describe('AuthService', () => {
@@ -40,6 +45,10 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: { sign: jest.fn().mockReturnValue('token') },
         },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue(10) },
+        },
       ],
     }).compile();
 
@@ -49,7 +58,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('returns an access token on happy path', async () => {
+    it('returns access token and user on happy path', async () => {
       const user = mockUser();
       usersService.findByEmail.mockResolvedValue(null);
       usersService.create.mockResolvedValue(user as any);
@@ -61,7 +70,9 @@ describe('AuthService', () => {
         password: 'secret123',
       });
 
-      expect(result).toEqual({ accessToken: 'token' });
+      expect(result.accessToken).toBe('token');
+      expect(result.user).not.toHaveProperty('password');
+      expect(result.user.id).toBe(user.id);
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: user.id,
         email: user.email,
@@ -95,7 +106,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('returns an access token on happy path', async () => {
+    it('returns access token and user on happy path', async () => {
       const user = mockUser();
       usersService.findByEmail.mockResolvedValue(user as any);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -105,7 +116,9 @@ describe('AuthService', () => {
         password: 'secret123',
       });
 
-      expect(result).toEqual({ accessToken: 'token' });
+      expect(result.accessToken).toBe('token');
+      expect(result.user).not.toHaveProperty('password');
+      expect(result.user.id).toBe(user.id);
     });
 
     it('throws UnauthorizedException when user is not found', async () => {

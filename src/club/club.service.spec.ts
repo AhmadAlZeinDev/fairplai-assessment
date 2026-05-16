@@ -23,10 +23,10 @@ type MockRepo = Partial<Record<keyof Repository<Club>, jest.Mock>>;
 
 const createMockRepo = (): MockRepo => ({
   findOneBy: jest.fn(),
+  findAndCount: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
   softRemove: jest.fn(),
-  createQueryBuilder: jest.fn(),
 });
 
 describe('ClubService', () => {
@@ -80,14 +80,7 @@ describe('ClubService', () => {
   describe('findAll', () => {
     it('returns paginated clubs', async () => {
       const club = mockClub();
-      const qb = {
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[club], 1]),
-      };
-      repo.createQueryBuilder!.mockReturnValue(qb);
+      repo.findAndCount!.mockResolvedValue([[club], 1]);
 
       const result = await service.findAll({
         page: 1,
@@ -113,9 +106,7 @@ describe('ClubService', () => {
 
     it('throws NotFoundException when club does not exist', async () => {
       repo.findOneBy!.mockResolvedValue(null);
-      await expect(service.findOne('uuid-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('uuid-1')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -147,9 +138,11 @@ describe('ClubService', () => {
       expect(repo.softRemove).toHaveBeenCalledWith(club);
     });
 
-    it('throws NotFoundException when club does not exist', async () => {
+    it('is a no-op when club does not exist (idempotent)', async () => {
       repo.findOneBy!.mockResolvedValue(null);
-      await expect(service.remove('uuid-1')).rejects.toThrow(NotFoundException);
+
+      await expect(service.remove('uuid-1')).resolves.toBeUndefined();
+      expect(repo.softRemove).not.toHaveBeenCalled();
     });
   });
 });
