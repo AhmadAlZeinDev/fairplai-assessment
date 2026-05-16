@@ -10,9 +10,11 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiExcludeEndpoint,
   ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -25,10 +27,6 @@ import { Public } from '../common/decorators/public.decorator';
 import { AnalysisService } from './analysis.service';
 import { TriggerAnalysisDto } from './dto/trigger-analysis.dto';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
-
-interface RawBodyRequest {
-  rawBody?: Buffer;
-}
 
 @ApiTags('Analysis')
 @Controller('analysis')
@@ -61,6 +59,7 @@ export class AnalysisController {
   @Post('webhook')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
   @ApiOperation({
     summary:
       'Receive analysis results from the AI service (called by external service)',
@@ -82,7 +81,7 @@ export class AnalysisController {
   })
   async webhook(
     @Headers('x-webhook-signature') signature: string,
-    @Req() req: RawBodyRequest,
+    @Req() req: RawBodyRequest<import('express').Request>,
     @Body() payload: WebhookPayloadDto,
   ) {
     const rawBody = req.rawBody ?? Buffer.from(JSON.stringify(payload));

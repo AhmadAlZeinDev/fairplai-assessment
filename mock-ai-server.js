@@ -1,5 +1,20 @@
 const http = require('http');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+// Load .env so WEBHOOK_SECRET always matches the app without manual env setup
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8')
+    .split('\n')
+    .forEach((line) => {
+      const [key, ...rest] = line.split('=');
+      if (key && rest.length && !process.env[key.trim()]) {
+        process.env[key.trim()] = rest.join('=').trim();
+      }
+    });
+}
 
 const PORT = 4000;
 const APP_WEBHOOK_URL = 'http://localhost:3000/api/v1/analysis/webhook';
